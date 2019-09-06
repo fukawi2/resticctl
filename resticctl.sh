@@ -357,11 +357,11 @@ BACKUP_EXCLUDE=(
 
 # if you need to run commands before or after the backup, specify them here
 # for example, running a backup of a database to a file
-PRE_HOOKS=(
-  'rclone serve restic MyServer:restic.repo &'
-)
-POST_HOOKS=(
-)
+#PRE_HOOKS=(
+#  'pg_dump foobar'
+#)
+#POST_HOOKS=(
+#)
 
 # if you need a command to serve the restic repository (eg, rclone) then
 # you can specify it here
