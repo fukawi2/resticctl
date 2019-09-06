@@ -4,7 +4,7 @@ A profile based control script for restic backup
 
 ## SYNOPSIS
 
-  resticctl (init|start|edit|forget|prune|cleanup|check|shell) profile [profile2 profileX]
+    resticctl (init|start|edit|forget|prune|cleanup|check|shell) profile [profile2 profileX]
 
 ## DESCRIPTION
 
