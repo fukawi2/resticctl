@@ -11,7 +11,6 @@ declare PROFILE_DIR=
 declare RESTIC_TAG=
 declare PRE_HOOKS=
 declare POST_HOOKS=
-declare SERVE_COMMAND=
 declare -i KEEP_LAST=
 declare -i KEEP_HOURLY=
 declare -i KEEP_DAILY=
@@ -100,14 +99,6 @@ function restic_start {
     [[ ! -e "$ipattern" ]] && abort "Include path not found: $ipattern"
   done
 
-  if [[ -n "$SERVE_COMMAND" ]] ; then
-    dbg "Starting serve command: $SERVE_COMMAND"
-    exec $SERVE_COMMAND &
-    serve_command_pid=$!
-    # give the serve process time to startup, then make sure it's still there
-    sleep 3
-    kill -0 $serve_command_pid &>/dev/null || abort "SERVE_COMMAND exited before we started work."
-  fi
   for cmd in "${PRE_HOOKS[@]}" ; do
     exec $cmd
   done
@@ -115,9 +106,6 @@ function restic_start {
   for cmd in "${POST_HOOKS[@]}" ; do
     exec $cmd
   done
-  if [[ -n "$SERVE_COMMAND" ]] ; then
-    kill $serve_command_pid
-  fi
 }
 
 ### SUBCOMMAND: forget #######################################################
@@ -286,7 +274,6 @@ function clear_existing_profile_vars {
   RESTIC_TAG=
   PRE_HOOKS=
   POST_HOOKS=
-  SERVE_COMMAND=
   KEEP_LAST=
   KEEP_HOURLY=
   KEEP_DAILY=
@@ -363,11 +350,6 @@ BACKUP_EXCLUDE=(
 #POST_HOOKS=(
 #)
 
-# if you need a command to serve the restic repository (eg, rclone) then
-# you can specify it here
-#SERVE_COMMAND='rclone serve restic MyServer:restic.repo'
-
-# options for the 'forget' command. Leave blank or
 # comment whole line to disable the flag.
 KEEP_LAST=
 KEEP_HOURLY=
