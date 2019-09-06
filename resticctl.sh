@@ -105,7 +105,7 @@ function restic_start {
     exec $SERVE_COMMAND &
     serve_command_pid=$!
     # give the serve process time to startup, then make sure it's still there
-    sleep 1
+    sleep 3
     kill -0 $serve_command_pid &>/dev/null || abort "SERVE_COMMAND exited before we started work."
   fi
   for cmd in "${PRE_HOOKS[@]}" ; do
