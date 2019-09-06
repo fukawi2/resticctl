@@ -33,8 +33,10 @@ function main() {
       dbg "PROFIE_DIR is $PROFILE_DIR"
       break
     fi
-    abort "Unable to locate suitable configuration directory"
   done
+  if [[ -z "$PROFILE_DIR" ]] ; then
+    abort "Unable to locate suitable configuration directory"
+  fi
 
   cmd="$1"
   shift
