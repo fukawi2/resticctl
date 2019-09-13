@@ -42,32 +42,35 @@ function main() {
   dbg "Command is $cmd"
 
   # loop over remaining cmdline args, treating them as profiles
-  for profile in "$@" ; do
+  for arg in "$@" ; do
     case "$cmd" in
       edit)
-        profile_edit "$profile"
+        profile_edit "$arg"
+        ;;
+      redit)
+        repo_edit "$arg"
         ;;
       init)
-        restic_init "$profile"
+        restic_init "$arg"
         ;;
       start)
-        restic_start "$profile"
+        restic_start "$arg"
         ;;
       check)
-        restic_check "$profile"
+        restic_check "$arg"
         ;;
       forget)
-        restic_forget "$profile"
+        restic_forget "$arg"
         ;;
       prune)
-        restic_prune "$profile"
+        restic_prune "$arg"
         ;;
       cleanup)
-        restic_forget "$profile"
-        restic_prune "$profile"
+        restic_forget "$arg"
+        restic_prune "$arg"
         ;;
       shell)
-        restic_shell "$profile"
+        restic_shell "$arg"
         ;;
       *)
         usage
@@ -159,7 +162,7 @@ EOF
   echo 'RESTIC SHELL EXITED.'
 }
 
-### PROFILE EDIT ##############################################################
+### PROFILE & REPO EDIT ##############################################################
 function profile_edit {
   local -r profile_name="$1"
   local -r fname="$(get_profile_filename "$profile_name")"
@@ -174,6 +177,31 @@ function profile_edit {
     # no existing profile; make a temporary one
     create_profile_template "$profile_name" "$tmpname"
   fi
+
+  edit_file "$fname" "$tmpname"
+}
+
+function repo_edit {
+  local -r repo_name="$1"
+  local -r fname="$(get_repo_filename "$repo_name")"
+  local -r tmpname="${fname}.tmp"
+
+  # we want to work on a temporary file until the user is finished and we can
+  # validate it as looking like a reasonable configuration
+  if [[ -f "$fname" ]] ; then
+    # copy the live file to a temp file
+    cp -f "$fname" "$tmpname"
+  else
+    # no existing config file; make a temporary one
+    create_repo_template "$repo_name" "$tmpname"
+  fi
+
+  edit_file "$fname" "$tmpname"
+}
+
+function edit_file {
+  local -r fname="$1"
+  local -r tmpname="$2"
 
   # start the editor
   edit_cmd="$(get_editor)"
@@ -203,6 +231,7 @@ function profile_edit {
     rm -f "$tmpname"
     break
   done
+  return 0
 }
 
 ###############################################################################
@@ -210,14 +239,15 @@ function profile_edit {
 ###############################################################################
 function usage {
   cat <<EOF
-Usage: $0 (init|start|edit|forget|prune|cleanup|check|shell) profile [profile2 profileX]
+Usage: $0 (init|start|edit|redit|forget|prune|cleanup|check|shell) profile [profile2 profileX]
 
   init      Initialize \$RESTIC_REPOSITORY
   start     Start a backup
   edit      Edit profile configuration
+  redit     Edit repository configuration
   forget    Forget old snapshots based on retention policies
   prune     Prune old data from repository
-  cleanup   'forget' and 'prune' together
+  cleanup   Run 'forget' then 'prune' in sequence
   check     Check the repository for errors
   shell     Start a shell with the relevant environment variables set
 
@@ -237,29 +267,36 @@ function abort {
 }
 
 function get_profile_filename {
-  echo "$PROFILE_DIR/${1}.conf"
+  echo "$PROFILE_DIR/${1}.profile"
+}
+function get_repo_filename {
+  echo "$PROFILE_DIR/${1}.repo"
 }
 
 function load_profile {
-  local -r profile_fname="$(get_profile_filename "$1")"
+  local -r profile="$1"
+  local -r profile_fname="$(get_profile_filename "$profile")"
 
   clear_existing_profile_vars
 
-  if [[ ! -f "$profile_fname" ]] ; then
-    abort "Profile not found '$profile_fname'"
-  fi
-
-  if [[ ! -r "$profile_fname" ]] ; then
-    abort "Unable to read profile '$profile_fname'"
-  fi
-
+  # load profile config
+  [[ ! -f "$profile_fname" ]] && abort "Profile not found: $profile_fname"
+  [[ ! -r "$profile_fname" ]] && abort "Unable to read profile: $profile_fname"
   source "$profile_fname"
   dbg "Loaded profile: $profile_fname"
 
-  # export restic configuration variables
+  # load repository config
+  [[ -z "$REPO" ]] && abort "No REPO configured for profile $profile"
+  local -r repo_fname="$(get_repo_filename "$REPO")"
+  [[ ! -f "$repo_fname" ]] && abort "Repository configuration file not found: $repo_fname"
+  [[ ! -r "$repo_fname" ]] && abort "Unable to read repo configuration file: $repo_fname"
+  source "$repo_fname"
+
+  # export restic configuration variables so restic can access directly without
+  # us having to do anything special to pass it in later commands.
   # we unset all variables earlier in this function, so testing if they're set
   # here will throw an undefined variable error (due to set -u at top of script)
-  # see this page explanation of the syntax to check to defined/undefined:
+  # see this page explanation of the syntax to check defined/undefined:
   # https://stackoverflow.com/questions/3601515/how-to-check-if-a-variable-is-set-in-bash
   [[ -n "${RESTIC_REPOSITORY+x}" ]]     && export RESTIC_REPOSITORY
   [[ -n "${RESTIC_PASSWORD+x}" ]]       && export RESTIC_PASSWORD
@@ -326,11 +363,10 @@ function create_profile_template {
 #   1. Don't forget proper quoting where appropriate
 #   2. Shell commands can be used (eg, subshells, variable expansion etc)
 
-# restic repository and access options
-RESTIC_REPOSITORY=
-RESTIC_PASSWORD=
-#AWS_ACCESS_KEY_ID=
-#AWS_SECRET_ACCESS_KEY=
+# name of the repository to use
+REPO=
+
+# all snapshots will be tagged with this string
 RESTIC_TAG=$pname
 
 # what to backup and exclude
@@ -357,6 +393,26 @@ KEEP_DAILY=
 KEEP_WEEKLY=
 KEEP_MONTHLY=
 KEEP_YEARLY=
+EOF
+  return 0
+}
+
+function create_repo_template {
+  local rname="$1"
+  local fname="$2"
+  cat > "$fname" <<EOF
+# Repository configuration file for restic profile '$rname'
+# Created at $(date) by $USER on $(uname -n)
+#
+# This file follows shell syntax:
+#   1. Don't forget proper quoting where appropriate
+#   2. Shell commands can be used (eg, subshells, variable expansion etc)
+
+# restic repository and access options
+RESTIC_REPOSITORY=
+RESTIC_PASSWORD=
+#AWS_ACCESS_KEY_ID=
+#AWS_SECRET_ACCESS_KEY=
 EOF
   return 0
 }
