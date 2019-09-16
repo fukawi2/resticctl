@@ -382,7 +382,7 @@ function create_profile_template {
 #   1. Don't forget proper quoting where appropriate
 #   2. Shell commands can be used (eg, subshells, variable expansion etc)
 
-# name of the repository to use
+# name of the repository to use. use 'resticctl redit <name>' to create/edit
 REPO=
 
 # all snapshots will be tagged with this string
