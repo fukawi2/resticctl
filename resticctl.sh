@@ -54,6 +54,9 @@ function main() {
       init)
         restic_init "$arg"
         ;;
+      status)
+        restic_status "$arg"
+        ;;
       start)
         restic_start "$arg"
         ;;
@@ -85,6 +88,19 @@ function restic_init {
   local -r profile="$1"
   load_profile "$profile"
   nice -n $RENICE restic init
+}
+
+### SUBCOMMAND: STATUS ###########################################################
+function restic_status {
+  local -r profile="$1"
+  local restic_args=''
+
+  load_profile "$profile"
+
+  [[ -n "$RESTIC_TAG" ]] && restic_args="$restic_args --tag $RESTIC_TAG"
+
+  nice -n $RENICE restic snapshots --host "$(uname -n)" --last $restic_args
+  nice -n $RENICE restic stats
 }
 
 ### SUBCOMMAND: START ##########################################################
@@ -240,9 +256,10 @@ function edit_file {
 ###############################################################################
 function usage {
   cat <<EOF
-Usage: $0 (init|start|edit|redit|forget|prune|cleanup|check|shell) profile [profile2 profileX]
+Usage: $0 (init|status|start|edit|redit|forget|prune|cleanup|check|shell) profile [profile2 profileX]
 
   init      Initialize \$RESTIC_REPOSITORY
+  status    List most recent backups
   start     Start a backup
   edit      Edit profile configuration
   redit     Edit repository configuration
