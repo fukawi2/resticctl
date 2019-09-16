@@ -1,0 +1,10 @@
+[Unit]
+Description=scheduled cleanup of restic %I repository
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+RandomizedDelaySec=45m
+
+[Install]
+WantedBy=timers.target

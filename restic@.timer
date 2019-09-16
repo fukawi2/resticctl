@@ -1,0 +1,10 @@
+[Unit]
+Description=scheduled restic %I backup
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+#RandomizedDelaySec=2m
+
+[Install]
+WantedBy=timers.target
