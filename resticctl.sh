@@ -9,6 +9,7 @@ declare -r DEBUG=
 # global variables used internally to this script
 declare PROFILE_DIR=
 declare RESTIC_TAG=
+declare -i RENICE=0
 declare PRE_HOOKS=
 declare POST_HOOKS=
 declare -i KEEP_LAST=
@@ -83,7 +84,7 @@ function main() {
 function restic_init {
   local -r profile="$1"
   load_profile "$profile"
-  restic init
+  nice -n $RENICE restic init
 }
 
 ### SUBCOMMAND: START ##########################################################
@@ -105,7 +106,7 @@ function restic_start {
   for cmd in "${PRE_HOOKS[@]}" ; do
     exec $cmd
   done
-  restic backup $restic_args "${BACKUP_INCLUDE[@]}"
+  nice -n $RENICE restic backup $restic_args "${BACKUP_INCLUDE[@]}"
   for cmd in "${POST_HOOKS[@]}" ; do
     exec $cmd
   done
@@ -128,7 +129,7 @@ function restic_forget {
   [[ "$KEEP_YEARLY" -gt 0 ]]  && keep_args="$keep_args --keep-yearly $KEEP_YEARLY"
   restic_args="$restic_args $keep_args"
 
-  restic forget $restic_args
+  nice -n $RENICE restic forget $restic_args
 }
 
 ### SUBCOMMAND: prune #########################################################
@@ -136,7 +137,7 @@ function restic_prune {
   local -r profile="$1"
   load_profile "$profile"
 
-  restic prune
+  nice -n $RENICE restic prune
 }
 
 ### SUBCOMMAND: check #########################################################
@@ -144,7 +145,7 @@ function restic_check {
   local -r profile="$1"
   load_profile "$profile"
 
-  restic check
+  nice -n $RENICE restic check
 }
 
 ### SUBCOMMAND: shell #########################################################
@@ -309,6 +310,7 @@ function load_profile {
 function clear_existing_profile_vars {
   unset RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
   RESTIC_TAG=
+  RENICE=0
   PRE_HOOKS=
   POST_HOOKS=
   KEEP_LAST=
@@ -368,6 +370,10 @@ REPO=
 
 # all snapshots will be tagged with this string
 RESTIC_TAG=$pname
+
+# renice the backup process to this value
+# learn more about nice by running 'man 1 nice'
+RENICE=10
 
 # what to backup and exclude
 BACKUP_INCLUDE=(
