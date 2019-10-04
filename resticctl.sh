@@ -175,7 +175,7 @@ function restic_shell {
  Type 'exit' when finished.
 +-----------------------------------------------------------------------------+
 EOF
-  bash
+  bash --rcfile <(echo "PS1='resticctl '$profile' > '") -i
   echo 'RESTIC SHELL EXITED.'
 }
 
