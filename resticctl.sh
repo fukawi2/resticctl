@@ -9,6 +9,7 @@ declare -r DEBUG=
 # global variables used internally to this script
 declare PROFILE_DIR=
 declare RESTIC_TAG=
+declare RESTIC_ARGS=
 declare -i RENICE=0
 declare PRE_HOOKS=
 declare POST_HOOKS=
@@ -106,8 +107,8 @@ function restic_status {
 ### SUBCOMMAND: START ##########################################################
 function restic_start {
   local -r profile="$1"
-  local restic_args=''
   load_profile "$profile"
+  local restic_args="$RESTIC_ARGS"
 
   [[ -n "$RESTIC_TAG" ]] && restic_args="$restic_args --tag $RESTIC_TAG"
 
@@ -327,6 +328,7 @@ function load_profile {
 function clear_existing_profile_vars {
   unset RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
   RESTIC_TAG=
+  RESTIC_ARGS=
   RENICE=0
   PRE_HOOKS=
   POST_HOOKS=
@@ -408,6 +410,9 @@ BACKUP_EXCLUDE=(
 #)
 #POST_HOOKS=(
 #)
+
+# additional arguments to pass to restic when creating backups
+#RESTIC_ARGS='--exclude-caches'
 
 # comment whole line to disable the flag.
 KEEP_LAST=
