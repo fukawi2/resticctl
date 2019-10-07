@@ -21,12 +21,6 @@ declare -i KEEP_MONTHLY=
 declare -i KEEP_YEARLY=
 
 function main() {
-  # make sure we have a minimum number of arguments
-  if [[ "$#" -lt 2 ]] ; then
-    usage
-    exit 1
-  fi
-
   # work out what directory to use for our configs
   for dirpath in /etc/restic ~/.restic . ; do
     if [[ -d "$dirpath" && -w "$dirpath" ]] ; then
@@ -39,9 +33,28 @@ function main() {
     abort "Unable to locate suitable configuration directory"
   fi
 
-  cmd="$1"
+  cmd="${1:-}"
+  [[ -z "$cmd" ]] && { usage; exit 1; }
   shift
   dbg "Command is $cmd"
+
+  # argumentless commands process early and exit
+  case "$cmd" in
+    list-profiles)
+      list_profiles
+      return 0
+      ;;
+    list-repos)
+      list_repos
+      return 0
+      ;;
+  esac
+
+  # make sure we still have arguments remaining
+  if [[ "$#" -lt 1 ]] ; then
+    usage
+    exit 1
+  fi
 
   # loop over remaining cmdline args, treating them as profiles
   for arg in "$@" ; do
@@ -147,6 +160,18 @@ function restic_forget {
   restic_args="$restic_args $keep_args"
 
   nice -n $RENICE restic forget $restic_args
+}
+
+### SUBCOMMAND: list_profiles #########################################################
+function list_profiles {
+  cd "$PROFILE_DIR"
+  ls -1 *.profile | sed -e 's/.profile$//g'
+}
+
+### SUBCOMMAND: list_profiles #########################################################
+function list_repos {
+  cd "$PROFILE_DIR"
+  ls -1 *.repo | sed -e 's/.repo$//g'
 }
 
 ### SUBCOMMAND: prune #########################################################
@@ -257,18 +282,21 @@ function edit_file {
 ###############################################################################
 function usage {
   cat <<EOF
-Usage: $0 (init|status|start|edit|redit|forget|prune|cleanup|check|shell) profile [profile2 profileX]
+Usage: $0 command profile [profile2 profileX]
 
-  init      Initialize \$RESTIC_REPOSITORY
-  status    List most recent backups
-  start     Start a backup
-  edit      Edit profile configuration
-  redit     Edit repository configuration
-  forget    Forget old snapshots based on retention policies
-  prune     Prune old data from repository
-  cleanup   Run 'forget' then 'prune' in sequence
-  check     Check the repository for errors
-  shell     Start a shell with the relevant environment variables set
+Supported 'command' arguments are:
+  list-profiles List configured profiles
+  list-repos    List configured repositories
+  init          Initialize \$RESTIC_REPOSITORY
+  status        List most recent backups
+  start         Start a backup
+  edit          Edit profile configuration
+  redit         Edit repository configuration
+  forget        Forget old snapshots based on retention policies
+  prune         Prune old data from repository
+  cleanup       Run 'forget' then 'prune' in sequence
+  check         Check the repository for errors
+  shell         Start a shell with the relevant environment variables set
 
 If more than 1 profile is given, loop through each one in sequence.
 EOF

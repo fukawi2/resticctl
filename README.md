@@ -4,7 +4,7 @@ A profile based control script for restic backup
 
 ## SYNOPSIS
 
-    resticctl (init|status|start|edit|redit|forget|prune|cleanup|check|shell) profile [profile2 profileX]
+    resticctl command profile [profile2 profileX]
 
 ## DESCRIPTION
 
@@ -20,6 +20,12 @@ resticctl can be setup and then scheduled using cron or systemd timers.
 ## COMMANDS
 
 `resticctl` recognizes the following commands:
+
+### list-profiles
+Lists all configured profiles.
+
+### list-repos
+Lists all configured repositories.
 
 ### init
 Initialize a new restic repository.
