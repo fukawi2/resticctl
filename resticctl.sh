@@ -297,19 +297,37 @@ EOF
 
 function guess_profile_dir {
   # work out what directory to use for our configs
-  for dirpath in /etc/restic ~/.restic . ; do
+  for dirpath in /etc/restic $HOME/.config/restic ; do
     if [[ -d "$dirpath" && -w "$dirpath" ]] ; then
-      dbg "PROFIE_DIR is $dirpath"
+      dbg "PROFILE_DIR is $dirpath"
       echo "$dirpath"
       return 0
     fi
   done
+
+  # unable to locate a directory; try to create one
+  if [[ $EUID -eq 0 ]] ; then
+    if mkdir /etc/restic ; then
+      dbg "Created PROFILE_DIR /etc/restic"
+      chmod 700 /etc/restic
+      echo '/etc/restic'
+      return 0
+    fi
+  fi
+  if mkdir $HOME/.config/restic ; then
+    dbg "Created PROFILE_DIR: $HOME/.config/restic"
+    chmod 700 $HOME/.config/restic
+    echo "$HOME/.config/restic"
+    return 0
+  fi
+
+  # default fail
   abort "Unable to locate suitable configuration directory"
 }
 
 function dbg {
   [[ -z $DEBUG ]] && return 0
-  echo "DEBUG: $1"
+  echo "DEBUG: $1" >&2
 }
 
 function abort {
