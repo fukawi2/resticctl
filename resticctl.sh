@@ -338,7 +338,15 @@ function load_profile {
 
   # load repository config
   [[ -z "$REPO" ]] && abort "No REPO configured for profile $profile"
-  local -r repo_fname="$(get_repo_filename "$REPO")"
+  load_repo "$REPO"
+
+  check_minimum_viable_profile
+}
+
+function load_repo {
+  local repo="$1"
+  local -r repo_fname="$(get_repo_filename "$repo")"
+
   [[ ! -f "$repo_fname" ]] && abort "Repository configuration file not found: $repo_fname"
   [[ ! -r "$repo_fname" ]] && abort "Unable to read repo configuration file: $repo_fname"
   source "$repo_fname"
@@ -354,7 +362,7 @@ function load_profile {
   [[ -n "${AWS_ACCESS_KEY_ID+x}" ]]     && export AWS_ACCESS_KEY_ID
   [[ -n "${AWS_SECRET_ACCESS_KEY+x}" ]] && export AWS_SECRET_ACCESS_KEY
 
-  check_minimum_viable_profile
+  return 0
 }
 
 function clear_existing_profile_vars {
