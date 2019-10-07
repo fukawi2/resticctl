@@ -21,20 +21,10 @@ declare -i KEEP_MONTHLY=
 declare -i KEEP_YEARLY=
 
 function main() {
-  # work out what directory to use for our configs
-  for dirpath in /etc/restic ~/.restic . ; do
-    if [[ -d "$dirpath" && -w "$dirpath" ]] ; then
-      PROFILE_DIR="$dirpath"
-      dbg "PROFIE_DIR is $PROFILE_DIR"
-      break
-    fi
-  done
-  if [[ -z "$PROFILE_DIR" ]] ; then
-    abort "Unable to locate suitable configuration directory"
-  fi
+  PROFILE_DIR="$(guess_profile_dir)"
 
   cmd="${1:-}"
-  [[ -z "$cmd" ]] && { usage; exit 1; }
+  [[ -z "$cmd" ]] && { usage; return 1; }
   shift
   dbg "Command is $cmd"
 
@@ -53,7 +43,7 @@ function main() {
   # make sure we still have arguments remaining
   if [[ "$#" -lt 1 ]] ; then
     usage
-    exit 1
+    return 1
   fi
 
   # loop over remaining cmdline args, treating them as profiles
@@ -92,9 +82,11 @@ function main() {
         ;;
       *)
         usage
-        exit 1
+        return 1
     esac
   done
+
+  return 0
 }
 
 ### SUBCOMMAND: INIT ###########################################################
@@ -301,6 +293,18 @@ Supported 'command' arguments are:
 If more than 1 profile is given, loop through each one in sequence.
 EOF
   return 0
+}
+
+function guess_profile_dir {
+  # work out what directory to use for our configs
+  for dirpath in /etc/restic ~/.restic . ; do
+    if [[ -d "$dirpath" && -w "$dirpath" ]] ; then
+      dbg "PROFIE_DIR is $dirpath"
+      echo "$dirpath"
+      return 0
+    fi
+  done
+  abort "Unable to locate suitable configuration directory"
 }
 
 function dbg {
