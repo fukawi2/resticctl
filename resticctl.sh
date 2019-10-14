@@ -128,7 +128,10 @@ function restic_start {
   for cmd in "${PRE_HOOKS[@]}" ; do
     exec $cmd
   done
+
+  echo "Starting backup profile '$profile'"
   nice -n $RENICE restic backup $restic_args "${BACKUP_INCLUDE[@]}"
+
   for cmd in "${POST_HOOKS[@]}" ; do
     exec $cmd
   done
