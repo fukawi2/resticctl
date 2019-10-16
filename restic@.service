@@ -6,3 +6,4 @@ After=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/resticctl start %i
+Environment=HOME=/root
