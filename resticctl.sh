@@ -419,9 +419,9 @@ function check_minimum_viable_profile {
 function get_editor {
   # check the environment for an editor; fall back to well-known defaults but
   # abort if we can't find anything useful
-  if [[ -n "$EDITOR" ]] ; then
+  if [[ -n "${EDITOR:-}" ]] ; then
     echo "$EDITOR"
-  elif [[ -n "$VISUAL" ]] ; then
+  elif [[ -n "${VISUAL:-}" ]] ; then
     echo "$VISUAL"
   elif hash nano 2>/dev/null ; then
     echo nano
