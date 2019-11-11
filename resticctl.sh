@@ -382,12 +382,16 @@ function load_repo {
   [[ -n "${RESTIC_PASSWORD+x}" ]]       && export RESTIC_PASSWORD
   [[ -n "${AWS_ACCESS_KEY_ID+x}" ]]     && export AWS_ACCESS_KEY_ID
   [[ -n "${AWS_SECRET_ACCESS_KEY+x}" ]] && export AWS_SECRET_ACCESS_KEY
+  [[ -n "${B2_ACCOUNT_ID+x}" ]]         && export B2_ACCOUNT_ID
+  [[ -n "${B2_ACCOUNT_KEY+x}" ]]        && export B2_ACCOUNT_KEY
 
   return 0
 }
 
 function clear_existing_profile_vars {
-  unset RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+  unset RESTIC_REPOSITORY RESTIC_PASSWORD
+  unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+  unset B2_ACCOUNT_ID B2_ACCOUNT_KEY
   RESTIC_TAG=
   RESTIC_ARGS=
   RENICE=0
@@ -502,6 +506,8 @@ RESTIC_REPOSITORY=
 RESTIC_PASSWORD=
 #AWS_ACCESS_KEY_ID=
 #AWS_SECRET_ACCESS_KEY=
+#B2_ACCOUNT_ID=
+#B2_ACCOUNT_KEY=
 EOF
   return 0
 }
