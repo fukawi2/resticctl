@@ -6,3 +6,4 @@ After=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/resticctl cleanup %i
+Environment=HOME=/root
