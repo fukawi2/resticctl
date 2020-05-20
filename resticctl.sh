@@ -125,18 +125,22 @@ function restic_start {
     [[ ! -e "$ipattern" ]] && abort "Include path not found: $ipattern"
   done
 
-  for cmd in "${PRE_HOOKS[@]}" ; do
-    echo "Executing pre-hook: $cmd"
-    $cmd
-  done
+  if [[ -n "${PRE_HOOKS}" ]] ; then
+    for cmd in "${PRE_HOOKS[@]}" ; do
+      echo "Executing pre-hook: $cmd"
+      $cmd
+    done
+  fi
 
   echo "Starting backup profile '$profile'"
   nice -n $RENICE restic backup $restic_args "${BACKUP_INCLUDE[@]}"
 
-  for cmd in "${POST_HOOKS[@]}" ; do
-    echo "Executing post-hook: $cmd"
-    $cmd
-  done
+  if [[ -n "${POST_HOOKS}" ]] ; then
+    for cmd in "${POST_HOOKS[@]}" ; do
+      echo "Executing post-hook: $cmd"
+      $cmd
+    done
+  fi
 }
 
 ### SUBCOMMAND: forget #######################################################
